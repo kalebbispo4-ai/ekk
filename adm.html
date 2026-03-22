@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7KZ // CORE - Sistema de Gestão</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #050a12; color: white; min-height: 100vh; overflow-x: hidden; display: flex; justify-content: center; align-items: center; }
+        .bg-stars { position: fixed; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/stardust.png'); opacity: 0.1; z-index: -1; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; }
+        
+        /* LOGIN */
+        #login-screen { width: 100%; max-width: 400px; text-align: center; animation: fadeIn 0.8s ease; }
+        .logo-7kz { font-size: 3.5rem; font-weight: bold; letter-spacing: 8px; margin-bottom: 10px; text-shadow: 0 0 20px rgba(114, 137, 218, 0.6); }
+        .login-card { padding: 40px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5); }
+        input, select { width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; outline: none; margin-bottom: 15px; }
+        .btn-access { width: 100%; padding: 12px; background: linear-gradient(90deg, #4752c4, #7289da); border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+
+        /* ESTRUTURA */
+        #main-container { display: none; width: 100%; min-height: 100vh; flex-direction: column; align-self: flex-start; }
+        header { padding: 25px 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(5, 10, 18, 0.9); width: 100%; z-index: 10; }
+        .status-user { color: #43b581; font-size: 0.65rem; font-weight: bold; margin-top: 5px; text-transform: uppercase; }
+
+        /* PAGINAS E CARDS */
+        .page { display: none; padding: 40px 50px; animation: fadeIn 0.4s ease; width: 100%; }
+        .active-page { display: block; }
+        .grid-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .module-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 25px; text-align: center; transition: 0.3s; cursor: pointer; }
+        .module-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(114, 137, 218, 0.4); }
+        
+        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; margin-top: 10px; }
+        .btn-blue { background: #2b59ff; color: white; }
+        .btn-orange { background: #faa61a; color: white; }
+        .btn-green { background: #43b581; color: white; }
+        .btn-pink { background: #eb459e; color: white; }
+        .btn-red { background: #f04747 !important; color: white; font-size: 0.6rem; margin-top: 5px; }
+        .btn-back { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 30px; font-size: 0.7rem; }
+
+        /* MODAIS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { width: 400px; padding: 30px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .user-list { margin-top: 15px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; text-align: left; }
+        .user-item { display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.75rem; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="bg-stars"></div>
+
+    <div id="login-screen">
+        <div class="logo-7kz">7KZ</div>
+        <div class="login-card glass">
+            <input type="text" id="user" placeholder="Usuário">
+            <input type="password" id="pass" placeholder="Senha">
+            <button class="btn-access" onclick="handleLogin()">ACESSAR CORE</button>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <header>
+            <div>
+                <div style="font-weight: bold; letter-spacing: 4px; font-size: 1.2rem;">7KZ // CORE</div>
+                <div id="logged-tag" class="status-user">STATUS: AGUARDANDO</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div id="adm-menu" style="display: none; gap: 10px;">
+                    <button class="btn-access" style="padding: 5px 15px; background: #2b59ff; font-size: 0.7rem;" onclick="toggleModal('modal-config', true)">TOKEN</button>
+                    <button class="btn-access" style="padding: 5px 15px; background: #faa61a; font-size: 0.7rem;" onclick="toggleModal('modal-adm', true)">CONTAS</button>
+                </div>
+                <button class="btn-access" style="padding: 5px 15px; background: #ff4747; font-size: 0.7rem;" onclick="location.reload()">SAIR</button>
+            </div>
+        </header>
+
+        <main id="home-page" class="page active-page">
+            <div style="text-align: center; margin-bottom: 40px;"><h2 style="letter-spacing: 3px; opacity: 0.8;">PAINEL OPERACIONAL</h2></div>
+            <div class="grid-main">
+                <div class="module-card" onclick="changePage('page-mutar')">
+                    <h3 style="color: #2b59ff; margin-bottom: 10px;">ATAQUE MUTE</h3>
+                    <p style="font-size: 0.7rem; opacity: 0.5;">Silenciamento forçado</p>
+                </div>
+                <div class="module-card" onclick="changePage('page-rodizio')">
+                    <h3 style="color: #faa61a; margin-bottom: 10px;">RODÍZIO CHAOS</h3>
+                    <p style="font-size: 0.7rem; opacity: 0.5;">Movimentação rápida</p>
+                </div>
+                <div class="module-card" onclick="changePage('page-protecao')">
+                    <h3 style="color: #43b581; margin-bottom: 10px;">ESCUDO DEFESA</h3>
+                    <p style="font-size: 0.7rem; opacity: 0.5;">Anti-mute automático</p>
+                </div>
+                <div class="module-card" onclick="changePage('page-coleira')">
+                    <h3 style="color: #eb459e; margin-bottom: 10px;">COLEIRA FOLLOW</h3>
+                    <p style="font-size: 0.7rem; opacity: 0.5;">Arrastar alvo</p>
+                </div>
+            </div>
+        </main>
+
+        <main id="page-mutar" class="page"><button class="btn-back" onclick="changePage('home-page')">← VOLTAR</button><div class="grid-main" id="mutar-slots"></div></main>
+        <main id="page-rodizio" class="page"><button class="btn-back" onclick="changePage('home-page')">← VOLTAR</button><div class="grid-main" id="rodizio-slots"></div></main>
+        <main id="page-protecao" class="page"><button class="btn-back" onclick="changePage('home-page')">← VOLTAR</button><div class="grid-main" id="protecao-slots"></div></main>
+        <main id="page-coleira" class="page"><button class="btn-back" onclick="changePage('home-page')">← VOLTAR</button><div class="grid-main" id="coleira-slots"></div></main>
+    </div>
+
+    <div id="modal-adm" class="modal"><div class="modal-content glass">
+        <h3 style="color:#faa61a; margin-bottom:15px;">GERIR ACESSOS</h3>
+        <input type="text" id="new-u" placeholder="Novo Login">
+        <input type="password" id="new-p" placeholder="Nova Senha">
+        <select id="new-role">
+            <option value="operador">OPERADOR (Básico)</option>
+            <option value="adm">ADMIN (Total)</option>
+        </select>
+        <button class="btn-access" style="background:#43b581; margin-bottom:10px;" onclick="addUser()">ADICIONAR USUÁRIO</button>
+        <button onclick="downloadUpdatedFile()" style="width:100%; background:#5865f2; color:white; padding:12px; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">📥 SALVAR TUDO E BAIXAR ARQUIVO</button>
+        <div class="user-list" id="user-list"></div>
+        <button onclick="toggleModal('modal-adm', false)" style="margin-top:15px; background:none; border:none; color:white; cursor:pointer; width:100%;">VOLTAR</button>
+    </div></div>
+
+    <div id="modal-config" class="modal"><div class="modal-content glass">
+        <h3 style="color:#2b59ff; margin-bottom:15px;">CONFIGURAÇÃO BOT</h3>
+        <input type="password" id="tk-in" placeholder="Token Discord">
+        <input type="text" id="gd-in" placeholder="ID do Servidor">
+        <button class="btn-access" onclick="saveBotConfig()">SALVAR NO NAVEGADOR</button>
+        <button onclick="toggleModal('modal-config', false)" style="margin-top:10px; background:none; border:none; color:white; cursor:pointer; width:100%;">VOLTAR</button>
+    </div></div>
+
+    <script id="db-script">
+        var dbUsers = [{ u: "7kz", p: "kaleb1303", role: "adm" }];
+    </script>
+
+    <script>
+        // MUDANÇA IMPORTANTE: Link para o ShardCloud
+        const API = "https://7kz.shardweb.app"; 
+
+        function handleLogin() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const found = dbUsers.find(x => x.u === u && x.p === p);
+            if(found) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-container').style.display = 'flex';
+                document.getElementById('logged-tag').innerText = `● LOGADO: ${found.u.toUpperCase()} (${found.role.toUpperCase()})`;
+                if(found.role === 'adm') document.getElementById('adm-menu').style.display = 'flex';
+                renderSlots();
+            } else { alert("Login Incorreto!"); }
+        }
+
+        async function enviarComando(acao, slotId, moduloKey) {
+            const idAlvo = document.getElementById(`in-${moduloKey}-${slotId}`).value;
+            const token = localStorage.getItem('7kz_tk');
+            const guild = localStorage.getItem('7kz_gd');
+
+            if (!token || !guild) return alert("Configure o TOKEN e ID do Servidor primeiro em 'TOKEN'!");
+            if (acao !== 'parar' && !idAlvo) return alert("Digite o ID do Alvo!");
+
+            try {
+                // Requisição para a API na nuvem
+                const res = await fetch(`${API}/cmd?acao=${acao}&id=${idAlvo || 'null'}&token=${token}&guild=${guild}`);
+                const data = await res.json();
+                if (data.status === "sucesso") alert("Comando enviado com sucesso!");
+                if (data.status === "parado") alert("Processo interrompido.");
+            } catch (e) {
+                alert("Erro: O bot na ShardCloud não respondeu. Verifique se ele está Online!");
+            }
+        }
+
+        function changePage(p) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.getElementById(p).classList.add('active-page');
+        }
+
+        function toggleModal(id, show) {
+            document.getElementById(id).style.display = show ? 'flex' : 'none';
+            if(id === 'modal-adm') renderUserList();
+        }
+
+        function addUser() {
+            const u = document.getElementById('new-u').value;
+            const p = document.getElementById('new-p').value;
+            const r = document.getElementById('new-role').value;
+            if(u && p) {
+                dbUsers.push({u, p, role: r});
+                renderUserList();
+                alert("Usuário adicionado! Baixe o arquivo atualizado.");
+            }
+        }
+
+        function renderUserList() {
+            document.getElementById('user-list').innerHTML = dbUsers.map(user => `
+                <div class="user-item"><span>${user.u} [${user.role}]</span> <span>${user.p}</span></div>
+            `).join('');
+        }
+
+        function downloadUpdatedFile() {
+            let fullHtml = document.documentElement.outerHTML;
+            let dbString = `var dbUsers = ${JSON.stringify(dbUsers)};`;
+            let updatedHtml = fullHtml.replace(/var dbUsers = \[.*?\];/, dbString);
+            let blob = new Blob(["<!DOCTYPE html>\n" + updatedHtml], {type: "text/html"});
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "7KZ_CORE_PRONTO.html";
+            a.click();
+        }
+
+        function renderSlots() {
+            const sections = {
+                mut: { el: 'mutar-slots', btn: 'btn-blue', txt: 'MUTE', cmd: 'mutar' },
+                rod: { el: 'rodizio-slots', btn: 'btn-orange', txt: 'RODÍZIO', cmd: 'rodar' },
+                pro: { el: 'protecao-slots', btn: 'btn-green', txt: 'ESCUDO', cmd: 'proteger' },
+                col: { el: 'coleira-slots', btn: 'btn-pink', txt: 'COLEIRA', cmd: 'coleira' }
+            };
+            for (let key in sections) {
+                const container = document.getElementById(sections[key].el);
+                container.innerHTML = "";
+                for(let i=1; i<=12; i++) {
+                    container.innerHTML += `
+                    <div class="module-card" style="cursor:default">
+                        <div style="font-size:0.6rem; color:#7289da; text-align:left; margin-bottom:10px;">SLOT #${i}</div>
+                        <input type="text" id="in-${key}-${i}" placeholder="ID do Alvo">
+                        <button class="btn-action ${sections[key].btn}" onclick="enviarComando('${sections[key].cmd}', ${i}, '${key}')">ATIVAR ${sections[key].txt}</button>
+                        <button class="btn-action btn-red" onclick="enviarComando('parar', ${i}, '${key}')">PARAR</button>
+                    </div>`;
+                }
+            }
+        }
+
+        function saveBotConfig() {
+            localStorage.setItem('7kz_tk', document.getElementById('tk-in').value);
+            localStorage.setItem('7kz_gd', document.getElementById('gd-in').value);
+            alert("Configurações salvas!");
+        }
+    </script>
+</body>
+</html>
